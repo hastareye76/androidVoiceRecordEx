@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Draw 라는 단어에서 알수 있듯이 평소에는 숨어 있다가 사용자의 액션에 따라서 나타나는 기능
+ 을 만들수 있게 해주는 layout 이다.
+ 평소에 보여주는 view 와 사용자의 액션에 따라서 보여줘야 하는 view 가 존재해야만 한다.
+ 따라서 DrawerLayout에는 최소 2개의 자식이 추가되어야 한다. 하나는 Drawer 역활을 수행하는 view
+ 다른 하나는 Drawer가 닫힌 즉 숨겨진 상태에서 보여줄 주화면입니다.
+
+ fitsSystemWindows 속성은 view가 차지할 수 있는 영역을 상태바및 소프크키 영역을 제외한
+ 영역까지 확장해주는 속성이다.
+
+ include tag는 한번 작성한 layout의 일부를 가져다 사용할 수 있게 해준다.-->
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:openDrawer="start">
+
+    <include
+        android:id="@+id/app_bar_main"
+        layout="@layout/app_bar_main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+<!--layout_gravity 속성을 갖는 view Drawer view 이다.
+start / left 를 줄 경우에는 왼쪽에서 생기며 end / right 를 주면 오른쪽에 생긴다.
+navigation 화면을 drawable 할수 있게 만들어 주었고. 에게 메뉴를 연결해 주었다. -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        app:headerLayout="@layout/nav_header_main"
+        app:menu="@menu/activity_main_drawer" />
+
+</androidx.drawerlayout.widget.DrawerLayout>
+
+<!--종합해 보면 DrawerLayout 에는  App bar + 주화면을 표시할 fragment 로 이루어진 app_bar_main 있고
+sild 로 navigation view로 보여줄 Draer view가 장작된 되어져 있다.
+Drw-->

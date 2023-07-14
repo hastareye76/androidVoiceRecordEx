@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+xmlns:app="http://schemas.android.com/apk/res-auto"는
+안드로이드 XML 파일에서 app: 접두사를 사용하기 위한 네임스페이스 선언입니다.
+
+xmlns는 XML 문서에서 사용되는 네임스페이스를 정의하는 데 사용되는 접두사입니다.
+app은 여기서 app: 접두사의 약칭을 나타냅니다.
+
+http://schemas.android.com/apk/res-auto는 app: 접두사를 사용할 때 실제로 참조하는 스키마를 나타냅니다.
+res-auto는 리소스 파일에서 자동으로 생성된 패키지 이름을 대체하는 특수 키워드입니다.
+
+이렇게 선언된 네임스페이스는 해당 XML 파일에서 app: 접두사를 사용하여 앱의 자체 정의 속성을 참조할 수 있도록 합니다.
+즉, app: 접두사를 사용하여 앱에서 정의한 속성을 지정할 수 있습니다
+
+예를 들어, 다음과 같이 app: 접두사를 사용하여 앱에서 정의한 속성을 지정할 수 있습니다:
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+</menu>
