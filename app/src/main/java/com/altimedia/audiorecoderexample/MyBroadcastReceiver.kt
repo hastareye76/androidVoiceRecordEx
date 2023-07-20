@@ -28,6 +28,7 @@ class MyBroadcastReceiver(context: MainActivity) : BroadcastReceiver() {
                         // 처리할 코드를 작성하세요.
                         Log.d(broadtag, "마이크가 있는 이어폰 분리")
                         //토스트 메소드를 보여주고 현재 녹음 중이라면 녹음을 중지한다. 녹음 재 시작을 ...
+                        main?.setImageByRecStateEx(false)
                         if(main?._voiceSender?.getRecordStatus() == true) {
                             Toast.makeText(context, "헤드셋 연결 해제 / 녹음을 중지합니다.", Toast.LENGTH_SHORT).show()
                             main?.stopRecording()
@@ -50,6 +51,7 @@ class MyBroadcastReceiver(context: MainActivity) : BroadcastReceiver() {
                         // 처리할 코드를 작성하세요.
                         Log.d(broadtag, "마이크가 있는 이어폰 연결")
                         //토스트 메소드를 보여주고 현재 녹음 중이라면 녹음을 중지한다. 녹음 재 시작을 ...
+                        main?.setImageByRecStateEx(false)
                         if(main?._voiceSender?.getRecordStatus() == true) {
                             Toast.makeText(context, "헤드셋 연결 / 녹음을 중지합니다.", Toast.LENGTH_SHORT)
                                 .show()

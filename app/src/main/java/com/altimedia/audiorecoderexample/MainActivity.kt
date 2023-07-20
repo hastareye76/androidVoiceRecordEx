@@ -20,6 +20,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.altimedia.audiorecoderexample.databinding.ActivityMainBinding
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 
@@ -140,7 +141,7 @@ class MainActivity : AppCompatActivity() {
     //헤드셋 plug in/out을 받기 위해서
     private lateinit var receiver: MyBroadcastReceiver
 
-
+    lateinit var fabButton : FloatingActionButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,6 +156,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         //root view 표시
         setContentView(binding.root)
+
+       fabButton = findViewById(R.id.fab)
 
         //ActionBar를 사용한다. toolbar
         setSupportActionBar(binding.appBarMain.toolbar)
@@ -171,11 +174,15 @@ class MainActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
                 startSocketRecording()
                 _voiceSender.setRecordStatus(true)
+                //이때는 녹음 시작이라서 버튼은 정지 버튼을 보여준다.
+                setImageByRecState(fabButton, _voiceSender.getRecordStatus())
             }else{
                 Snackbar.make(view, "녹음 정지!!!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
                 stopRecording()
                 _voiceSender.setRecordStatus(false)
+                //이때는 녹음 정지라서 버튼은 녹음 버튼을 보여준다.
+                setImageByRecState(fabButton, _voiceSender.getRecordStatus())
             }
 
 
@@ -224,6 +231,24 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    fun setImageByRecStateEx(state : Boolean){
+        Log.d(mytag, "setImageByRecStateEx call 녹음 상태 [$state]")
+        if(state == true){
+            fabButton.setImageResource(R.drawable.ic_stop)
+        }else{
+            fabButton.setImageResource(R.drawable.baseline_record_voice_over_24)
+        }
+
+    }
+     fun setImageByRecState(fabButton: FloatingActionButton, state: Boolean){
+        Log.d(mytag, "setImageByRecState call 녹음 상태 [$state]")
+         if(state == true){
+             fabButton.setImageResource(R.drawable.ic_stop)
+         }else{
+             fabButton.setImageResource(R.drawable.baseline_record_voice_over_24)
+         }
+    }
+
     //
     var thread : Thread? = null
     var recverThread : Thread? = null
@@ -242,8 +267,6 @@ class MainActivity : AppCompatActivity() {
             Log.d(mytag, "from server data packet receive thread start")
             recverThread!!.start();
         }
-
-
     }
 
     fun stopRecording(){
