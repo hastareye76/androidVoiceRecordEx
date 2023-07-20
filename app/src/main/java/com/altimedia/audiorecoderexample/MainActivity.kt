@@ -1,27 +1,29 @@
 package com.altimedia.audiorecoderexample
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.view.Menu
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.navigation.NavigationView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import com.altimedia.audiorecoderexample.databinding.ActivityMainBinding
-import java.io.DataOutputStream
-import java.io.FileOutputStream
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
+
+
 
 class MainActivity : AppCompatActivity() {
 /*
@@ -109,14 +111,34 @@ class MainActivity : AppCompatActivity() {
      */
     private lateinit var binding: ActivityMainBinding
 
-    //AudioRecoder
-    //오디오 표준 sample rate 44.1 khz [1초당 44100번 샘플링하여 기록 하였다는 의미]
-    private val SAMPLE_RATE = 44100
-    private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
-    private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
 
-    val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
 
+    private val mytag :String = "VOICEREC"
+
+    //접속할 서버에 대한 정보[내빌드 PC에서 실행되고 있다.
+    private val SERVER_IP : String = "10.1.1.166"
+    private val SERVER_PORT : Int = 29001
+    private val SERVER_RECV_PORT : Int = 19012
+
+
+    //외장메모리 path
+//    val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
+
+    //multi permission 권한
+    private val multiplePermissionCode = 100
+
+    //var array1 = arrayOf(1,2,4) : 특정값을 넣어서 배열을 생성할때 사요한다.
+    //var array2 = Array(10, {0}) : 크기만 정해서 배열을 생성할때 사용한다.
+    private val requiredPermissions = arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.INTERNET)
+
+    lateinit var context: Context
+
+    lateinit var _voiceSender : VoiceSender
+    lateinit var _recvThread : VoiceRecver
+    var isStartRecv : Boolean = false
+
+    //헤드셋 plug in/out을 받기 위해서
+    private lateinit var receiver: MyBroadcastReceiver
 
 
 
@@ -137,11 +159,26 @@ class MainActivity : AppCompatActivity() {
         //ActionBar를 사용한다. toolbar
         setSupportActionBar(binding.appBarMain.toolbar)
 
+        Log.d(mytag, "startSocketRecording call start VoiceSender Create ")
+        _voiceSender = VoiceSender(this, SERVER_IP, SERVER_PORT)
+        _recvThread = VoiceRecver(this, SERVER_IP, SERVER_RECV_PORT)
+
         //바인딩 된 이메일 아이콘을 눌렀을 경우 .... 이걸 녹화 버튼으로 사용한다.
-        binding.appBarMain.fab.setOnClickListener { view ->
-            Snackbar.make(view, "녹화 시작 버튼을 누렀다.", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-            startRecording()
+        binding.appBarMain.fab.setOnClickListener {
+                view ->
+            if(!_voiceSender.getRecordStatus()) {
+                Snackbar.make(view, "녹음 시작!!!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show()
+                startSocketRecording()
+                _voiceSender.setRecordStatus(true)
+            }else{
+                Snackbar.make(view, "녹음 정지!!!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show()
+                stopRecording()
+                _voiceSender.setRecordStatus(false)
+            }
+
+
         }
         //
         val drawerLayout: DrawerLayout = binding.drawerLayout
@@ -158,7 +195,6 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(
         //코틀린에서 setOf 함수는 고유한 원소로 구성된 변경 불가능한(immutable) 집합(set)을 생성하는데 사용하는 함수이다.
         //이 함수는 주어진 인자들을 기반으로 한 집합을 생성하며, 중복된 원소는 제거한다.
-
             setOf(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
             ), drawerLayout
@@ -168,6 +204,122 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         //navigation view 에 Host를 연결해 준다.
         navView.setupWithNavController(navController)
+
+
+//      requestExtWritePermission()
+        Log.d(mytag, "onCreate multi permission request start")
+        requestPermissions()
+        Log.d(mytag, "onCreate multi permission request end & onCreate complete")
+//
+//        context = this
+
+        //헤드셋의 plug in/out 이벤트를 받기 위해서
+        receiver = MyBroadcastReceiver(this)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_HEADSET_PLUG)
+        }
+
+        //등록을 해줘야  동작한다.
+        registerReceiver(receiver, filter)
+
+    }
+
+    //
+    var thread : Thread? = null
+    var recverThread : Thread? = null
+    fun startSocketRecording(){
+        //스레드를 만들어서 접속한다.
+        Log.d(mytag, "startSocketRecording call start VoiceSender Create end $SERVER_IP:$SERVER_PORT")
+        _voiceSender.startRecording()
+        thread = Thread(_voiceSender)
+        Log.d(mytag, "recording and packet send thread start")
+        thread!!.start();
+
+        //수신부 스레드를 시작해 준다.
+        if(!isStartRecv) {
+            isStartRecv = true
+            recverThread = Thread(_recvThread)
+            Log.d(mytag, "from server data packet receive thread start")
+            recverThread!!.start();
+        }
+
+
+    }
+
+    fun stopRecording(){
+        Log.d(mytag, "stopRecording call stop VoiceSender")
+        _voiceSender.stopRecording();
+    }
+
+
+
+
+    //다중권한
+    private fun requestPermissions() {
+        //요청한 권한에 대해서 거절되거나 아직 수락하지 않은 권한을 저장할 문자열 배열 리스트
+        var rejectedPermissionList = ArrayList<String>()
+
+        //필요한 퍼미션들을 하나씩 체크하여 현재 권한을 받았는지 체크 for in 함수를 통해서 배열에서 하나씩
+        for(permission in requiredPermissions) {
+            if(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                //만약 권한이 없다면 reject 된 권한을 list에 추가를 해준다.
+                rejectedPermissionList.add(permission)
+            }
+        }
+        //만약 거절된 권한이 있다면 사용자가에게 재 요청을 하여 권한을 받아와야 한다.
+        if(rejectedPermissionList.isNotEmpty()) {
+            //권한을 요청해야 한다. arrayofNulls 는 지정된 크기의 null로 채워진 배열을 만드는 함수이다.
+            val array = arrayOfNulls<String>(rejectedPermissionList.size)
+            //List에 추가한것을 배열로 변경하여 함수 인자로 넘겨준다. 이번 request 요청에 대한 응답인지를 구분하기 위해서 code 값을 넣어준다. onRequestPermissionsResult 함수를 시스템에서 호출할
+            //때 이 코드값을 넘겨준다.
+            ActivityCompat.requestPermissions(this,rejectedPermissionList.toArray(array), multiplePermissionCode)
+        }
+    }
+
+    //요청된 권한에 대한 처리를 안드로이드에서 호출해주는 콜백함수를 override 하여 처리를 해줘야 한다.
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        //switch 문과 비슷한 when 구문을 사용하여 처리한다. (우리가 권한을 여러번 요청할 수 있으므로 이 code로 식별
+        when(requestCode) {
+            multiplePermissionCode -> {
+                //권한요청에 대한 결과가 존재하는지를 보고 비어 있지 않는다면. 자바에서 있던 것이군 collection을 사용하여 for문을 실행할때 인덱스와 값을 가져
+                //오려면 withIndex가 구문을 사용한다.
+                if(grantResults.isNotEmpty()){
+                    for((i, permission) in permissions.withIndex()) {
+                        if(grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                            //권한 획득 실패
+                            Log.d(mytag, "The user has denied to $permission")
+                        }else{
+                            Log.d(mytag, "The user has gain to $permission")
+                        }
+                    }
+
+                }
+            }
+
+        }
+    }
+    private fun showExplanation(
+        title: String,
+        message: String,
+        permission: String,
+        permissionRequestCode: Int
+    ) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(
+                android.R.string.ok
+            ) { dialog, id -> requestPermission(permission, permissionRequestCode) }
+        builder.create().show()
+    }
+
+    private fun requestPermission(permissionName: String, permissionRequestCode: Int) {
+        ActivityCompat.requestPermissions(this, arrayOf(permissionName), permissionRequestCode)
     }
 
     //ActionBar에 메뉴를 생성해 넣는다.
@@ -207,45 +359,10 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    fun startRecording() {
-        Log.d("MainActivity", "startRecording call")
-        //우리가 지정한 포맷으로 녹음을 진행할때 필요한 버퍼를 시스템에 요구해서 받아낸다.(
-        val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
-        //시스템이 최소한의 필요한 버퍼 정보를 주었다. 이를 기반으로 사용할 버퍼를 정의 한다.
-        val data = ByteArray(bufferSize)
-        //자이제 AudioRecord 객체를 생성한다.
-        val audioRecord : AudioRecord
-
-        val outputFile = "$externalStoragePath/path_to_output_file.wav"
-        val outputStream = DataOutputStream(FileOutputStream(outputFile))
-
-        //권한이 체크
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            Log.d("MainActivity", "startRecording call RECORD_AUDIO permission err" )
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        } else {
-            Log.d("MainActivity", "startRecording call RECORD_AUDIO permission ok" )
-        }
-        audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize)
-
-        audioRecord.startRecording()
-
-        Thread {
-            while (true) {
-                val bytesRead = audioRecord.read(data, 0, bufferSize)
-                outputStream.write(data, 0, bytesRead)
-            }
-        }.start()
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(receiver)
     }
+
+
 }

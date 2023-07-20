@@ -3,8 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<!--    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
+    <uses-permission android:name="android.permission.INTERNET"/>
+<!--    이어폰의 plug in/out -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+<!--안드로이드는 시스템이나 다른 App 에서 게시-구독 디자인 패턴과 유사한 broadcast 메세지를
+    받거나 메세지를 보낼 수 있다. 관심있는 이벤트가 발생할 때 이런한 broadcast 가 전송된다.
+    예를 들어서 기기 충전 / 헤드셋 plug in out / 등과 같은 시스템 이벤트가 발생되는 이를
+    broadcast 해준다.-->
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -14,6 +21,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AudioRecoderExample"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
@@ -26,6 +34,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".MyBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.HEADSET_PLUG" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
