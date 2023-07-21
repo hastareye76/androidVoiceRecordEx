@@ -23,53 +23,59 @@ import com.altimedia.audiorecoderexample.databinding.ActivityMainBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileWriter
+import java.lang.Exception
+import java.lang.StringBuilder
 
-
-
+//https://www.flaticon.com/search?word=mic
 class MainActivity : AppCompatActivity() {
-/*
-   코틀린은 기본적으로 null 사용을 지양하고 있다.
-   목적에 맞게 늦은 초기화 기법이 존재한다.
-   lateinit 과 lazy 이다.
-   현재
-   appBarConfiguration binding 는 모두 var 로 선언되어져 있다. 변경될 수 있기 때문이다. 늦은
-   초기화를 선언했다면 변경이 가능한 변수 이므로 val을 사용해서는 안된다.
-   이를 lateinit 으로 즉 늦은 초기화를 하겠다고 명시적으로 선언하였다.
+    /*
+       코틀린은 기본적으로 null 사용을 지양하고 있다.
+       목적에 맞게 늦은 초기화 기법이 존재한다.
+       lateinit 과 lazy 이다.
+       현재
+       appBarConfiguration binding 는 모두 var 로 선언되어져 있다. 변경될 수 있기 때문이다. 늦은
+       초기화를 선언했다면 변경이 가능한 변수 이므로 val을 사용해서는 안된다.
+       이를 lateinit 으로 즉 늦은 초기화를 하겠다고 명시적으로 선언하였다.
 
-   lateinit 으로 선언해 부고 초기화를 하지 않으면 컴파일 단계에서 에러가 발생한다.
-   lateinit 의 경우에는 계속하여 값이 변경될 수 있다는 속성을 위해 무조건 var 을 사용해야 하며,
-   Primitive Type (Int, Float, Double, Long 등) 에는 사용할 수 없다.
+       lateinit 으로 선언해 부고 초기화를 하지 않으면 컴파일 단계에서 에러가 발생한다.
+       lateinit 의 경우에는 계속하여 값이 변경될 수 있다는 속성을 위해 무조건 var 을 사용해야 하며,
+       Primitive Type (Int, Float, Double, Long 등) 에는 사용할 수 없다.
 
-   by lazy
-   fun main() {
-        lateinit var text: String
-        val textLength: Int by lazy {
-            text.length
+       by lazy
+       fun main() {
+            lateinit var text: String
+            val textLength: Int by lazy {
+                text.length
+            }
+
+            // 대충 중간에 뭔가 했음
+            text = "H43RO_Velog"
+            println(textLength)
         }
+        살펴보면 by lazy 구문을 통해서 어떤 생성자를 넣어준 모양이다. 값을 가져와야 할 변수가 lateinit
+        으로 선언되어 있어서 아직 text가 초기화 되지 않는 text의 속성을 가져와야 한다는 점이다.
 
-        // 대충 중간에 뭔가 했음
-        text = "H43RO_Velog"
-        println(textLength)
-    }
-    살펴보면 by lazy 구문을 통해서 어떤 생성자를 넣어준 모양이다. 값을 가져와야 할 변수가 lateinit
-    으로 선언되어 있어서 아직 text가 초기화 되지 않는 text의 속성을 가져와야 한다는 점이다.
+        by lazy 는 선언되는 시점에는 초기화를 할 방법이 없지만 이후 의존되는 값 (여기서는 text가 될것 인데 )
+        들이 초기화 된 이후에 값을 채워 놓고 싶을때 사용한다. 즉 호출시 에는 어떻게 최기화를 해줄지 에 대한 정의
+        를 해둔다고 보면 된다.
 
-    by lazy 는 선언되는 시점에는 초기화를 할 방법이 없지만 이후 의존되는 값 (여기서는 text가 될것 인데 )
-    들이 초기화 된 이후에 값을 채워 놓고 싶을때 사용한다. 즉 호출시 에는 어떻게 최기화를 해줄지 에 대한 정의
-    를 해둔다고 보면 된다.
+        val로 선언되어져 있음을 볼 수 있는데 이는 단한번 늦은 초기화가 이루어지고 이후에는 값이 불변함을 보장
+        한다는 의미다.
 
-    val로 선언되어져 있음을 볼 수 있는데 이는 단한번 늦은 초기화가 이루어지고 이후에는 값이 불변함을 보장
-    한다는 의미다.
-
-    사용 Tip
-    안드로이드에선 이전 액티비티에서 넘어온 Intent Bundle Extra 등을 현재 액티비티 멤버 변수에 by lazy 로 받아와,
-    선언해두고 사용 시에 intent.extra 등으로 번들을 뜯어볼 수 있다.
-    이렇게 하면 생명주기를 위반하지 않고 안전하게 클래스 전역에서 사용할 수 있는 값을 갖고올 수 있다.
- */
+        사용 Tip
+        안드로이드에선 이전 액티비티에서 넘어온 Intent Bundle Extra 등을 현재 액티비티 멤버 변수에 by lazy 로 받아와,
+        선언해두고 사용 시에 intent.extra 등으로 번들을 뜯어볼 수 있다.
+        이렇게 하면 생명주기를 위반하지 않고 안전하게 클래스 전역에서 사용할 수 있는 값을 갖고올 수 있다.
+     */
 
     //늦은 초기화 변수 선언
     //App의 App Bar관련된 동작을 정의하는데 사용되는 클래스이다. 주로 Toolbar 와 결합하여 App bar를 구성한다.
     private lateinit var appBarConfiguration: AppBarConfiguration
+
     //DataBinding
     /*
     Activatiy 나 Fragment 의 데이타를 화면에 출력하는 부분을 도와 주는 AAC(Android Architecture Component)
@@ -113,35 +119,41 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
 
-
-    private val mytag :String = "VOICEREC"
+    private val mytag: String = "VOICEREC"
 
     //접속할 서버에 대한 정보[내빌드 PC에서 실행되고 있다.
-    private val SERVER_IP : String = "10.1.1.166"
-    private val SERVER_PORT : Int = 29001
-    private val SERVER_RECV_PORT : Int = 19012
+    private var SERVER_IP: String = "10.1.1.166"
+    private var SERVER_PORT: Int = 29001
+    private var SERVER_RECV_PORT: Int = 19012
 
+    //어플의 설정을 저장할 json 파일선언
+    private var LANGUAGE: String = "kor"
+    private val saveSessionDataFile: String = "setting.json"
 
     //외장메모리 path
-//    val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
+    val externalStoragePath: String = Environment.getExternalStorageDirectory().absolutePath
 
     //multi permission 권한
     private val multiplePermissionCode = 100
 
     //var array1 = arrayOf(1,2,4) : 특정값을 넣어서 배열을 생성할때 사요한다.
     //var array2 = Array(10, {0}) : 크기만 정해서 배열을 생성할때 사용한다.
-    private val requiredPermissions = arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.INTERNET)
+    private val requiredPermissions = arrayOf(
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.INTERNET, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    )
 
     lateinit var context: Context
 
-    lateinit var _voiceSender : VoiceSender
-    lateinit var _recvThread : VoiceRecver
-    var isStartRecv : Boolean = false
+    lateinit var _voiceSender: VoiceSender
+    lateinit var _recvThread: VoiceRecver
+    var isStartRecv: Boolean = false
 
     //헤드셋 plug in/out을 받기 위해서
     private lateinit var receiver: MyBroadcastReceiver
 
-    lateinit var fabButton : FloatingActionButton
+    lateinit var fabButton: FloatingActionButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -157,7 +169,7 @@ class MainActivity : AppCompatActivity() {
         //root view 표시
         setContentView(binding.root)
 
-       fabButton = findViewById(R.id.fab)
+        fabButton = findViewById(R.id.fab)
 
         //ActionBar를 사용한다. toolbar
         setSupportActionBar(binding.appBarMain.toolbar)
@@ -167,16 +179,15 @@ class MainActivity : AppCompatActivity() {
         _recvThread = VoiceRecver(this, SERVER_IP, SERVER_RECV_PORT)
 
         //바인딩 된 이메일 아이콘을 눌렀을 경우 .... 이걸 녹화 버튼으로 사용한다.
-        binding.appBarMain.fab.setOnClickListener {
-                view ->
-            if(!_voiceSender.getRecordStatus()) {
+        binding.appBarMain.fab.setOnClickListener { view ->
+            if (!_voiceSender.getRecordStatus()) {
                 Snackbar.make(view, "녹음 시작!!!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
                 startSocketRecording()
                 _voiceSender.setRecordStatus(true)
                 //이때는 녹음 시작이라서 버튼은 정지 버튼을 보여준다.
                 setImageByRecState(fabButton, _voiceSender.getRecordStatus())
-            }else{
+            } else {
                 Snackbar.make(view, "녹음 정지!!!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
                 stopRecording()
@@ -200,8 +211,8 @@ class MainActivity : AppCompatActivity() {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
-        //코틀린에서 setOf 함수는 고유한 원소로 구성된 변경 불가능한(immutable) 집합(set)을 생성하는데 사용하는 함수이다.
-        //이 함수는 주어진 인자들을 기반으로 한 집합을 생성하며, 중복된 원소는 제거한다.
+            //코틀린에서 setOf 함수는 고유한 원소로 구성된 변경 불가능한(immutable) 집합(set)을 생성하는데 사용하는 함수이다.
+            //이 함수는 주어진 인자들을 기반으로 한 집합을 생성하며, 중복된 원소는 제거한다.
             setOf(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
             ), drawerLayout
@@ -229,39 +240,116 @@ class MainActivity : AppCompatActivity() {
         //등록을 해줘야  동작한다.
         registerReceiver(receiver, filter)
 
+        //우리는 데이타
+        readSessionData(saveSessionDataFile)
+
     }
 
-    fun setImageByRecStateEx(state : Boolean){
+    //접속할 서버에 대한 정보[내빌드 PC에서 실행되고 있다.
+//    private val SERVER_IP : String = "10.1.1.166"
+//    private val SERVER_PORT : Int = 29001
+//    private val SERVER_RECV_PORT : Int = 19012
+    fun readSessionData(fileName: String) {
+        val path = externalStoragePath + "/" + fileName
+        val file = File(path)
+
+        val fileWriter: FileWriter
+
+        val bufferedReader: BufferedReader
+        if (!file.exists()) {
+
+            Log.d(mytag, "저장된 파일이 없다.!!!!")
+            file.createNewFile()
+            fileWriter = FileWriter(file)
+
+            //JSON 객체 생성하여 ( key, value ) 방식으로 작성하여 넣는다.
+            val jsonObj = JSONObject()
+            jsonObj.put("selectedLang", LANGUAGE)
+            jsonObj.put("serverAddress", SERVER_IP)
+
+            fileWriter.write(jsonObj.toString())
+            fileWriter.flush()
+            fileWriter.close()
+        } else {
+            Log.d(mytag, "저장된 파일이 있다..")
+//            file.delete()
+            try {
+                bufferedReader = BufferedReader(file.reader())
+                var strBuilder = StringBuilder()
+                var jsonString: String?
+
+                bufferedReader.useLines { lines ->
+                    lines.forEach {
+                        strBuilder.append(it)
+                    }
+                }
+                bufferedReader.close()
+
+                jsonString = strBuilder.toString()
+                if (jsonString != null) {
+                    val jsonObj = JSONObject(jsonString)
+                    val selectedLang = jsonObj.getString("selectedLang")
+                    val serverAddress = jsonObj.getString("serverAddress")
+
+                    Log.d(mytag, "selectedLang[$selectedLang], serverAddress[$serverAddress]")
+                    SERVER_IP = serverAddress
+                    LANGUAGE = selectedLang
+                    //세션 데이타가 저장되어있다면....getJSONArray 함수는 null 대신 exception 을 던진다.
+                    var dataArray = jsonObj.getJSONArray("data")
+
+                    for (i in 0 until dataArray.length()) {
+                        val sessionObject = dataArray.getJSONObject(i)
+                        val title = sessionObject.getString("title")
+                        val date = sessionObject.getString("date")
+                        val elapsed = sessionObject.getInt("elapsed")
+                        Log.d(mytag, "title[$title], data[$date], elapsed[$elapsed]")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.d(mytag, e.stackTraceToString())
+            }
+
+
+        }
+
+    }
+
+
+    fun setImageByRecStateEx(state: Boolean) {
         Log.d(mytag, "setImageByRecStateEx call 녹음 상태 [$state]")
-        if(state == true){
+        if (state == true) {
             fabButton.setImageResource(R.drawable.ic_stop)
-        }else{
+        } else {
             fabButton.setImageResource(R.drawable.baseline_record_voice_over_24)
         }
 
     }
-     fun setImageByRecState(fabButton: FloatingActionButton, state: Boolean){
+
+    fun setImageByRecState(fabButton: FloatingActionButton, state: Boolean) {
         Log.d(mytag, "setImageByRecState call 녹음 상태 [$state]")
-         if(state == true){
-             fabButton.setImageResource(R.drawable.ic_stop)
-         }else{
-             fabButton.setImageResource(R.drawable.baseline_record_voice_over_24)
-         }
+        if (state == true) {
+            fabButton.setImageResource(R.drawable.ic_stop)
+        } else {
+            fabButton.setImageResource(R.drawable.baseline_record_voice_over_24)
+        }
     }
 
-    //
-    var thread : Thread? = null
-    var recverThread : Thread? = null
-    fun startSocketRecording(){
+    //송/수신 스레드.
+    var thread: Thread? = null
+    var recverThread: Thread? = null
+    fun startSocketRecording() {
         //스레드를 만들어서 접속한다.
-        Log.d(mytag, "startSocketRecording call start VoiceSender Create end $SERVER_IP:$SERVER_PORT")
+        Log.d(
+            mytag,
+            "startSocketRecording call start VoiceSender Create end $SERVER_IP:$SERVER_PORT"
+        )
         _voiceSender.startRecording()
         thread = Thread(_voiceSender)
         Log.d(mytag, "recording and packet send thread start")
         thread!!.start();
 
         //수신부 스레드를 시작해 준다.
-        if(!isStartRecv) {
+        if (!isStartRecv) {
             isStartRecv = true
             recverThread = Thread(_recvThread)
             Log.d(mytag, "from server data packet receive thread start")
@@ -269,12 +357,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun stopRecording(){
+    fun stopRecording() {
         Log.d(mytag, "stopRecording call stop VoiceSender")
         _voiceSender.stopRecording();
     }
-
-
 
 
     //다중권한
@@ -283,19 +369,27 @@ class MainActivity : AppCompatActivity() {
         var rejectedPermissionList = ArrayList<String>()
 
         //필요한 퍼미션들을 하나씩 체크하여 현재 권한을 받았는지 체크 for in 함수를 통해서 배열에서 하나씩
-        for(permission in requiredPermissions) {
-            if(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+        for (permission in requiredPermissions) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 //만약 권한이 없다면 reject 된 권한을 list에 추가를 해준다.
                 rejectedPermissionList.add(permission)
             }
         }
         //만약 거절된 권한이 있다면 사용자가에게 재 요청을 하여 권한을 받아와야 한다.
-        if(rejectedPermissionList.isNotEmpty()) {
+        if (rejectedPermissionList.isNotEmpty()) {
             //권한을 요청해야 한다. arrayofNulls 는 지정된 크기의 null로 채워진 배열을 만드는 함수이다.
             val array = arrayOfNulls<String>(rejectedPermissionList.size)
             //List에 추가한것을 배열로 변경하여 함수 인자로 넘겨준다. 이번 request 요청에 대한 응답인지를 구분하기 위해서 code 값을 넣어준다. onRequestPermissionsResult 함수를 시스템에서 호출할
             //때 이 코드값을 넘겨준다.
-            ActivityCompat.requestPermissions(this,rejectedPermissionList.toArray(array), multiplePermissionCode)
+            ActivityCompat.requestPermissions(
+                this,
+                rejectedPermissionList.toArray(array),
+                multiplePermissionCode
+            )
         }
     }
 
@@ -307,16 +401,16 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         //switch 문과 비슷한 when 구문을 사용하여 처리한다. (우리가 권한을 여러번 요청할 수 있으므로 이 code로 식별
-        when(requestCode) {
+        when (requestCode) {
             multiplePermissionCode -> {
                 //권한요청에 대한 결과가 존재하는지를 보고 비어 있지 않는다면. 자바에서 있던 것이군 collection을 사용하여 for문을 실행할때 인덱스와 값을 가져
                 //오려면 withIndex가 구문을 사용한다.
-                if(grantResults.isNotEmpty()){
-                    for((i, permission) in permissions.withIndex()) {
-                        if(grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.isNotEmpty()) {
+                    for ((i, permission) in permissions.withIndex()) {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                             //권한 획득 실패
                             Log.d(mytag, "The user has denied to $permission")
-                        }else{
+                        } else {
                             Log.d(mytag, "The user has gain to $permission")
                         }
                     }
@@ -326,6 +420,7 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
+
     private fun showExplanation(
         title: String,
         message: String,

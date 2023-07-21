@@ -18,7 +18,6 @@ class VoiceRecver (context: MainActivity, val ip: String, val port: Int) : Runna
     private var recvSocket = DatagramSocket(port)
     val receiveBuffer = ByteArray(recvBufferSize)
 
-
     init {
 
 
@@ -32,11 +31,18 @@ class VoiceRecver (context: MainActivity, val ip: String, val port: Int) : Runna
 
             val serverAddr = receivePacket.address
             val serverSendPort = receivePacket.port
+
             val receiveData = String(receivePacket.data, 0, receivePacket.length)
 
-            //Log.d(recvtag, "서버로 수신한 데이타 : [${receiveData}]")
+            //Log.d(recvtag, "서버로 수신한 데이타 : [${receiveData}] ")
 
 
         }
+    }
+
+    //녹화가 시작되는 순간 저장할 파일을..... 선택된 언어와 인덱스 값으로 구분을 한다.
+    fun setFileName(lang: String, recNum: Int){
+        saveFileName = "${lang}_${recNum}.txt"
+        Log.d(recvtag, "setFileName=[$saveFileName]")
     }
 }
